@@ -17,6 +17,6 @@ Gem::Specification.new do |gem|
   gem.test_files    = gem.files.grep(%r{^(test|spec|features)/})
   gem.require_paths = ["lib"]
 
-  s.add_dependency('activesupport')
+  gem.add_dependency('activesupport')
 
 end
