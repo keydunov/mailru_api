@@ -11,15 +11,15 @@ require 'active_support/inflector'
 
 # Пример использования:
 #   client = ::MailruApi::Client.new app_id, api_secret, access_token
-#   client.stream.get_by_author 
+#   client.stream.get_by_author
 
 module MailruApi
   class Client
     MAILRU_API_URL = "http://www.appsmail.ru/platform/api?"
-    MAILRUAPI_METHODS = %w(audio stream users events friends payments photos messages guestbook notifications 
+    MAILRUAPI_METHODS = %w(audio stream users events friends payments photos messages guestbook notifications
     widget mail)
 
-    attr_accessor :client_id, :client_secret, :access_token 
+    attr_accessor :client_id, :client_secret, :access_token
 
     # ------ Конструктор, аргументы:
     # * client_id — идентификатор вашего сайта
@@ -28,7 +28,7 @@ module MailruApi
     # ------ Подробнее см. http://api.mail.ru/docs/guides/oauth/sites/
     def initialize client_id, client_secret, access_token, prefix = nil
       @client_id, @client_secret, @access_token, @prefix = client_id, client_secret, access_token, prefix
-    end  
+    end
 
     def request method, params = {}
       params[:method] = @prefix ? "#{@prefix}.#{method}" : method
@@ -37,33 +37,32 @@ module MailruApi
       params[:session_key] ||= @access_token
       params[:sig] = sig(params.tap do |s|
         # stringify keys
-        s.keys.each {|k| s[k.to_s] = s.delete k  }	
+        s.keys.each {|k| s[k.to_s] = s.delete k  }
       end )
-      puts params
-      response = JSON.parse(Net::HTTP.post_form(URI.parse(MAILRU_API_URL), params).body)      
+      response = JSON.parse(Net::HTTP.post_form(URI.parse(MAILRU_API_URL), params).body)
       if !response.is_a?(Array) and response['error']
-        raise ServerError.new self, method, params, response['error']['error_msg'] 
+        raise ServerError.new self, method, params, response['error']['error_msg']
       end
       response
-    end	
+    end
 
     # ------ Создаем подпись запроса (http://api.mail.ru/docs/guides/restapi/#sig)
     def sig(params)
       Digest::MD5::hexdigest(
-      params.keys.sort.map{|key| "#{key}=#{params[key]}"}.join + 
-      client_secret) 
-    end	
+      params.keys.sort.map{|key| "#{key}=#{params[key]}"}.join +
+      client_secret)
+    end
 
     # ------ Перехват неизвестных методов
     def method_missing(name, *arg)
       #Позволяет использовать названия методов в стиле Ruby (get_by_author вместо getByAuthor)
       method = name.to_s.camelize(:lower)
       request method, *arg
-    end 
+    end
 
-    # ------ Создаем методы (audio, stream и т.д.)  
+    # ------ Создаем методы (audio, stream и т.д.)
     MAILRUAPI_METHODS.each do |name|
-      self.send :define_method, name do 
+      self.send :define_method, name do
         instance_variable_set("@#{name}", ::MailruApi::Client.new(@client_id, @client_secret, @access_token, name))
       end
     end
