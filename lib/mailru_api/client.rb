@@ -40,7 +40,7 @@ module MailruApi
         s.keys.each {|k| s[k.to_s] = s.delete k  }
       end )
       response = JSON.parse(Net::HTTP.post_form(URI.parse(MAILRU_API_URL), params).body)
-      if !response.is_a?(Array) and response['error']
+      if !response.kind_of?(Array) && response['error']
         raise ServerError.new self, method, params, response['error']['error_msg']
       end
       response
